@@ -85,11 +85,9 @@ jobs:
       - run:
           name: test
           command: hatch run test
-      # - run:
-      #     name: cve scan
-      #     command: |
-      #       pipenv update
-      #       snyk test
+      - run:
+          name: cve scan
+          command: hatch run cve
 
   build package and integration test:
     executor: python-builder

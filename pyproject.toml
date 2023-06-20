@@ -54,3 +54,4 @@ dependencies = [
 [tool.hatch.envs.default.scripts]
 lint = "pylint src"
 test = "coverage run -m pytest -vv -l && coverage xml && coverage report"
+cve = "snyk test"
