@@ -40,7 +40,7 @@ python-cli-setup = "python_cli_setup.cli:cli"
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "_version.py"
+version-file = "src/_version.py"
 
 [tool.hatch.envs.default]
 dependencies = [

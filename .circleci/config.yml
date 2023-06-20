@@ -27,42 +27,6 @@ executors:
     docker:
       - image: twdps/circleci-python-builder:stable
 
-# ================================================================= commands
-
-commands:
-
-  set-credentials:
-    parameters:
-      environment:
-        description: test or prod
-        type: string
-        default: test
-    steps:
-      - when:
-          condition:
-            equal: [ << parameters.environment >>, "test" ]
-          steps:
-            - run:
-                name: set test.pypi access
-                command: |
-                  cat \<<EOF > ~/.pypirc
-                  [testpypi]
-                    username = __token__
-                    password = ${PYPI_TEST_API_TOKEN} HATCH_INDEX_USER
-                  EOF
-      - when:
-          condition:
-            equal: [ << parameters.environment >>, "prod" ]
-          steps:
-            - run:
-                name: set pypi access
-                command: |
-                  cat \<<EOF > ~/.pypirc
-                  [pypi]
-                    username = __token__
-                    password = ${PYPI_API_TOKEN}
-                  EOF
-
 # ================================================================= jobs
 
 jobs:
@@ -86,7 +50,7 @@ jobs:
           name: test
           command: hatch run test
 
-  build package and publish test:
+  build package and publish:
     executor: python-builder
     steps:
       - checkout
@@ -105,22 +69,17 @@ jobs:
             HATCH_INDEX_USER: __token__  
             HATCH_INDEX_AUTH: ${PYPI_TEST_API_TOKEN}  
           command: hatch publish
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist/
 
-  publish:
-    executor: python-builder
-    steps:
-      - checkout
-      - setup_remote_docker
-      # - op/env:
-      #     env-file: op.env
+
+  # publish:
+  #   executor: python-builder
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker
+  #     - op/env:
+  #         env-file: op.env
       # - set-credentials:
       #     environment: prod
-      # - attach_workspace:
-      #     at: .
       # - run:
       #     name: upload to pypi
       #     command: python -m twine upload --repository pypi dist/*
@@ -140,14 +99,6 @@ workflows:
           context: *context
           filters: *on-push-main
 
-      - build package and publish test:
+      - build package and publish:
           context: *context
-          requires:
-            - static code analysis and unit tests
-          filters: *on-push-main
-
-      - publish:
-          context: *context
-          requires:
-            - build package and publish test
           filters: *on-tag-main
