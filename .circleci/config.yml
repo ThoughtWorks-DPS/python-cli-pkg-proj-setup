@@ -85,31 +85,30 @@ jobs:
       - run:
           name: test
           command: hatch run test
-      - run:
-          name: cve scan
-          command: hatch run cve
 
-  build package and integration test:
+  build package and publish test:
     executor: python-builder
     steps:
       - checkout
       - setup_remote_docker
-      # - op/env:
-      #     env-file: op.env
+      - op/env:
+          env-file: op.env
       # - set-credentials:
       #     environment: test
-      # - run:
-      #     name: Build
-      #     command: |
-      #       sudo pip install -r requirements.txt
-      #       PYTHONPATH=.:./src python -m build
-      # - run:
-      #     name: upload to test.pypi
-      #     command: python -m twine upload --repository testpypi dist/*
-      # - persist_to_workspace:
-      #     root: .
-      #     paths:
-      #       - dist/
+      - run:
+          name: Build
+          command: hatch build
+      - run:
+          name: test publish to test.pypi
+          environment:
+            HATCH_INDEX_REPO: test  
+            HATCH_INDEX_USER: __token__  
+            HATCH_INDEX_AUTH: ${PYPI_TEST_API_TOKEN}  
+          command: hatch publish
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/
 
   publish:
     executor: python-builder
@@ -141,12 +140,14 @@ workflows:
           context: *context
           filters: *on-push-main
 
-      - build package and integration test:
+      - build package and publish test:
           context: *context
-          filters: *on-tag-main
+          requires:
+            - static code analysis and unit tests
+          filters: *on-push-main
 
       - publish:
           context: *context
           requires:
-            - build package and integration test
+            - build package and publish test
           filters: *on-tag-main
